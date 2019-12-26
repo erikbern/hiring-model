@@ -94,12 +94,11 @@ for our_kx, our_ky in [(1, 0), (1, 0.5), (0.75, 0.75), (2, 2)]:
     fn = 'exp_model_%.2f_%.2f.png' % (our_kx, our_ky)
     with gfx_setup(fn) as (fig, axes):
         bucket_1_f, bucket_2_f, bucket_3_f = split_by_exp_model(our_kx, our_ky)
-        scatter(axes, bucket_1_f, color=(1, 0, 0), label='Worst 3rd')
-        scatter(axes, bucket_2_f, color=(0.5, 0, 0.5), label='Mid 3rd')
-        scatter(axes, bucket_3_f, color=(0, 0, 1), label='Top 3rd')
+        scatter(axes, bucket_1_f, color=(1, 0, 0), label='Worst 3rd candidates')
+        scatter(axes, bucket_2_f, color=(0.5, 0, 0.5), label='Mid 3rd candidates')
+        scatter(axes, bucket_3_f, color=(0, 0, 1), label='Top 3rd candidates')
         pad_f = 0.9
-        axes[1][0].arrow(0, 0, 1*pad_f, 1*pad_f, head_width=0.4, head_length=0.4, width=0.1, ec='none', fc=(0, 0.7, 0), alpha=0.7)
-        axes[1][0].arrow(0, 0, our_kx*pad_f, our_ky*pad_f, head_width=0.4, head_length=0.4, width=0.1, ec='none', fc=(1, 0.5, 0), alpha=0.7)
-        axes[1][0].text(1, 1, 'Market', color=(0, 0.7, 0), va='bottom')
-        axes[1][0].text(our_kx, our_ky, 'We hire', color=(1, 0.5, 0), va='bottom')
-        fig.suptitle('Market vector = (%.2f, %.2f)\nOur vector = (%.2f, %.2f)' % (1, 1, our_kx, our_ky))
+        for dx, dy, color, label in [(1, 1, (0.3, 0.3, 0), 'Market'), (our_kx, our_ky, (0, 0.3, 0.3), 'We hire')]:
+            axes[1][0].arrow(0, 0, dx*pad_f, dy*pad_f, head_width=0.4, head_length=0.4, width=0.1, ec='none', fc=color, alpha=0.7)
+            axes[1][0].text(dx, dy, label, color=color, va='bottom')
+        fig.suptitle('Market vector = (%.2f, %.2f)\nOur vector = (%.2f, %.2f)' % (1, 1, our_kx, our_ky), x=0.02, y=0.98, ha='left')
