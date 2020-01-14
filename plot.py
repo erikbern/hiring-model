@@ -34,8 +34,8 @@ def gfx_setup(filename, xlabel='Ability with thing A', ylabel='Ability with thin
     fig.savefig(filename)
 
 
-xs = [random.gauss(0, 1) for i in range(5000)]
-ys = [random.gauss(0, 1) for i in range(5000)]
+xys = numpy.random.multivariate_normal([0, 0], [[1, 0.5], [0.5, 1]], size=5000)
+xs, ys = xys.T  # xys[:,0], xys[:,1]
 
 def scatter(axes, fn, color, label):
     axes[1][0].scatter([], [], color=color, label=label)  # just for label
@@ -74,7 +74,7 @@ with gfx_setup('plot_confidence.png', xlabel='Competence', ylabel='Confidence') 
     scatter(axes, lambda x, y: x <= 1 and x+y <= 1.5,
             color='r', label='Candidates we do not bring in')
 
-with gfx_setup('plot_fancy_school.png', xlabel='Did well on coding test', ylabel='Went to fancy school') as (fig, axes):
+with gfx_setup('plot_fancy_school.png', xlabel='Competence', ylabel='School fanciness') as (fig, axes):
     scatter(axes, lambda x, y: x+y > 1.5,
             color=(1, 0.5, 0), label='Candidates that do not want to talk to us')
     scatter(axes, lambda x, y: 2 < 2*x+y and x+y <= 1.5,
@@ -82,23 +82,24 @@ with gfx_setup('plot_fancy_school.png', xlabel='Did well on coding test', ylabel
     scatter(axes, lambda x, y: 2*x+y <= 2 and x+y <= 1.5,
             color='r', label='Candidates we do not bring in')
 
-def split_by_exp_model(our_kx, our_ky, market_kx=1, market_ky=1):
-    func = lambda x, y: numpy.log(numpy.exp(our_kx*x + our_ky*y) / (1 + numpy.exp(market_kx*x + market_ky*y)))
+def split_by_exp_model(company_kx, company_ky, market_kx=1, market_ky=1):
+    func = lambda x, y: numpy.log(numpy.exp(company_kx*x + company_ky*y) / (1 + numpy.exp(market_kx*x + market_ky*y)))
     vs_sorted = sorted(func(x, y) for x, y in zip(xs, ys))
     thresh_lo, thresh_hi = vs_sorted[len(vs_sorted)//3], vs_sorted[len(vs_sorted)*2//3]
     return (lambda x, y: func(x, y) < thresh_lo,
             lambda x, y: thresh_lo <= func(x, y) < thresh_hi,
             lambda x, y: thresh_hi <= func(x, y))
 
-for our_kx, our_ky in [(1, 0), (1, 0.5), (0.75, 0.75), (2, 2)]:
-    fn = 'exp_model_%.2f_%.2f.png' % (our_kx, our_ky)
+for company_kx, company_ky in [(1, 0), (1, 0.5), (0.75, 0.75), (2, 2), (0, 1), (0, 0), (0, 3)]:
+    fn = 'exp_model_%.2f_%.2f.png' % (company_kx, company_ky)
     with gfx_setup(fn) as (fig, axes):
-        bucket_1_f, bucket_2_f, bucket_3_f = split_by_exp_model(our_kx, our_ky)
-        scatter(axes, bucket_1_f, color=(1, 0, 0), label='Worst 3rd candidates')
-        scatter(axes, bucket_2_f, color=(0.5, 0, 0.5), label='Mid 3rd candidates')
-        scatter(axes, bucket_3_f, color=(0, 0, 1), label='Top 3rd candidates')
+        bucket_1_f, bucket_2_f, bucket_3_f = split_by_exp_model(company_kx, company_ky)
+        scatter(axes, bucket_1_f, color=(1, 0, 0), label='Least matching candidates')
+        scatter(axes, bucket_2_f, color=(0.5, 0, 0.5), label='Middle group')
+        scatter(axes, bucket_3_f, color=(0, 0, 1), label='Best matching candidates')
         pad_f = 0.9
-        for dx, dy, color, label in [(1, 1, (0.3, 0.3, 0), 'Market'), (our_kx, our_ky, (0, 0.3, 0.3), 'We hire')]:
-            axes[1][0].arrow(0, 0, dx*pad_f, dy*pad_f, head_width=0.4, head_length=0.4, width=0.1, ec='none', fc=color, alpha=0.7)
-            axes[1][0].text(dx, dy, label, color=color, va='bottom')
-        fig.suptitle('Market vector = (%.2f, %.2f)\nOur vector = (%.2f, %.2f)' % (1, 1, our_kx, our_ky), x=0.02, y=0.98, ha='left')
+        for dx, dy, color, label in [(1, 1, (0.4, 0.4, 0), 'Market'), (company_kx, company_ky, (0, 0.4, 0.4), 'Company')]:
+            axes[1][0].arrow(0, 0, dx*pad_f, dy*pad_f, head_width=0.4, head_length=0.4, width=0.1, ec='white', fc=color, alpha=0.7)
+            axes[1][0].text(dx, dy, label, color=color, va='bottom', ha='center', bbox=dict(facecolor='white', alpha=0.3, ec='none', pad=0.1))
+            
+        fig.suptitle('Market vector = (%.2f, %.2f)\nCompany vector = (%.2f, %.2f)' % (1, 1, company_kx, company_ky), x=0.02, y=0.98, ha='left')
